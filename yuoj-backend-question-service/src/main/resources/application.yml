@@ -35,7 +35,10 @@ spring:
         min-idle: 1
         max-wait: -1
     url: redis://123456@192.168.103.61:6379
-
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
   # 文件上传
   servlet:
     multipart:
@@ -55,6 +58,7 @@ server:
     session:
       cookie:
         max-age: 2592000
+        path: /api
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
@@ -75,5 +79,6 @@ codesandbox:
 #    org:
 #      springframework: debug
 
-
+knife4j:
+  enable: true
 
