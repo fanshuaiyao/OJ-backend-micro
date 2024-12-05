@@ -18,8 +18,8 @@ import com.yupi.yuojbackendmodel.model.vo.QuestionSubmitVO;
 import com.yupi.yuojbackendquestionservice.mapper.QuestionSubmitMapper;
 import com.yupi.yuojbackendquestionservice.service.QuestionService;
 import com.yupi.yuojbackendquestionservice.service.QuestionSubmitService;
-import com.yupi.yuojbackendserviceclient.service.JudgeService;
-import com.yupi.yuojbackendserviceclient.service.UserService;
+import com.yupi.yuojbackendserviceclient.service.JudgeFeignClient;
+import com.yupi.yuojbackendserviceclient.service.UserFeignClient;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -43,11 +43,11 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     private QuestionService questionService;
 
     @Resource
-    private UserService userService;
+    private UserFeignClient userFeignClient;
 
     @Resource
     @Lazy
-    private JudgeService judgeService;
+    private JudgeFeignClient judgeFeignClient;
 
     /**
      * 提交题目
@@ -91,7 +91,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         Long questionSubmitId = questionSubmit.getId();
         // todo 执行判题服务
         CompletableFuture.runAsync(()->{
-            judgeService.doJudge(questionSubmitId);
+            judgeFeignClient.doJudge(questionSubmitId);
         });
         return questionSubmitId;
     }
@@ -135,7 +135,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         // 1.得到当前登录用户
         long userId = loginUser.getId();
         // 2. 做脱敏 过滤   如果你不是管理员并且也不是提交的人员， 那么这条记录中的代码对你过滤
-        if (userId != questionSubmitVO.getUserId() && !userService.isAdmin(loginUser)) {
+        if (userId != questionSubmitVO.getUserId() && !userFeignClient.isAdmin(loginUser)) {
             questionSubmitVO.setCode(null);
         }
         return questionSubmitVO;
