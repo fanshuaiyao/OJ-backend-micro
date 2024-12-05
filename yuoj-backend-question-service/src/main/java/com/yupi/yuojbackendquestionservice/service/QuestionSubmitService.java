@@ -31,21 +31,18 @@ public interface QuestionSubmitService extends IService<QuestionSubmit> {
      */
     QueryWrapper<QuestionSubmit> getQueryWrapper(QuestionSubmitQueryRequest questionSubmitQueryRequest);
 
-
     /**
      * 获取题目封装
-     *
      * @param questionSubmit
-     * @param request
+     * @param loginUser
      * @return
      */
     QuestionSubmitVO getQuestionSubmitVO(QuestionSubmit questionSubmit, User loginUser);
 
     /**
      * 分页获取题目封装
-     *
-     * @param questionPage
-     * @param request
+     * @param questionSubmitPage
+     * @param loginUser
      * @return
      */
 
