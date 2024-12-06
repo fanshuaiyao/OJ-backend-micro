@@ -42,7 +42,7 @@
 
 4. 使用Spring Cloud Alibaba重构单体项目，使用Redis分布式Session存储登录用户信息，梳理各个服务之间的调用关系，并通过Nacos+OpenFeign实现了各模块之间的相互调用。使用Spring Cloud Gateway对各服务接口进行聚合和路由，并通过自定义CorsWebFilter Bean全局解决了跨域问题。使用Knife4j Gateway在网关层实现了对各服务Swagger接口文档的统一聚合。为保护内部服务接口，给接口路径统一设置inner前缀，并通过在网关自定义GlobalFilter实现对内部请求的检测和拦截，集中解决了权限校验问题。
 
-5. 为防止判题操作执行时间较长，系统选用异步的方式，在题目服务中将用户提交id发送给RabbitMQ消息队列，并通过Direct交换机转发给判题队列，由判题服务进行消费，异步更新提交状态。相比于同步，响应时长由xx秒减少至xx秒，且系统qps提升了xxx%（需要自己使用JMeter等工具进行测试）。
+5. 为防止判题操作执行时间较长，系统选用异步的方式，在题目服务中将用户提交id发送给RabbitMQ消息队列，并通过Direct交换机转发给判题队列，由判题服务进行消费，异步更新提交状态。
 
 ### 系统时序图
 ![image-20241206161334303](https://shuaiyao85.oss-cn-qingdao.aliyuncs.com/img/202412061613365.png)
