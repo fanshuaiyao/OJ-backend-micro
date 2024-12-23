@@ -7,6 +7,7 @@ import com.yupi.yuojbackendcommon.exception.BusinessException;
 import com.yupi.yuojbackendjudgeservice.judge.codesandbox.CodeSandBox;
 import com.yupi.yuojbackendmodel.model.codsandbox.ExecuteCodeRequest;
 import com.yupi.yuojbackendmodel.model.codsandbox.ExecuteCodeResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -14,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
  * @description: 实际调用的沙箱
  * @date 2024/11/22 17:14
  */
+@Slf4j
 public class RemoteCodeSand implements CodeSandBox {
 
     // 定义鉴权请求头和密钥
@@ -22,7 +24,7 @@ public class RemoteCodeSand implements CodeSandBox {
 
     @Override
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest executeCodeRequest) {
-        System.out.println("远程代码沙箱");
+        log.info("开始请求远程代码沙箱");
         String url = "http://121.194.93.24:8090/executeCode";
         String json = JSONUtil.toJsonStr(executeCodeRequest);
         String responseStr = HttpUtil.createPost(url)
@@ -33,6 +35,7 @@ public class RemoteCodeSand implements CodeSandBox {
         if (StringUtils.isBlank(responseStr)) {
             throw new BusinessException(ErrorCode.API_REQUEST_ERROR,"execute remoteCodeSandbox error message" + responseStr);
         }
+        log.info("代码沙箱的相应结果为：", responseStr);
 
         return JSONUtil.toBean(responseStr, ExecuteCodeResponse.class);
 

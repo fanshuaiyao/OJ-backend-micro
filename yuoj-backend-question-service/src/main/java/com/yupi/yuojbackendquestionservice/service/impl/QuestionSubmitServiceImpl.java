@@ -7,6 +7,7 @@ import com.yupi.yuojbackendcommon.common.ErrorCode;
 import com.yupi.yuojbackendcommon.constant.CommonConstant;
 import com.yupi.yuojbackendcommon.exception.BusinessException;
 import com.yupi.yuojbackendcommon.utils.SqlUtils;
+import com.yupi.yuojbackendcommon.utils.UserContext;
 import com.yupi.yuojbackendmodel.model.dto.questionsubmit.QuestionSubmitAddRequest;
 import com.yupi.yuojbackendmodel.model.dto.questionsubmit.QuestionSubmitQueryRequest;
 import com.yupi.yuojbackendmodel.model.entity.Question;
@@ -21,6 +22,7 @@ import com.yupi.yuojbackendquestionservice.service.QuestionService;
 import com.yupi.yuojbackendquestionservice.service.QuestionSubmitService;
 import com.yupi.yuojbackendserviceclient.service.JudgeFeignClient;
 import com.yupi.yuojbackendserviceclient.service.UserFeignClient;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -36,6 +38,7 @@ import java.util.stream.Collectors;
 * @description 针对表【question_submit(题目提交)】的数据库操作Service实现
 * @createDate 2024-11-16 23:28:55
 */
+@Slf4j
 @Service
 public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper, QuestionSubmit>
     implements QuestionSubmitService{
@@ -61,6 +64,9 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
      */
     @Override
     public long doQuestionSubmit(QuestionSubmitAddRequest questionSubmitAddRequest, User loginUser) {
+        Long user = UserContext.getUser();
+        log.info("用户{}正在做题", user);
+
         // 1. 先从请求对象中拿到题目id
         Long questionId = questionSubmitAddRequest.getQuestionId();
 
@@ -92,9 +98,9 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "数据插入失败！");
         }
         Long questionSubmitId = questionSubmit.getId();
-        // 将任务加入消息队列
+        // 第一种方案：将任务加入消息队列
         myMessageProducer.sendMessage("code_exchange", "my_routingKey", String.valueOf(questionSubmitId));
-        // 执行判题服务
+        // 第二种方案：异步执行判题服务
         // CompletableFuture.runAsync(()->{
         //     judgeFeignClient.doJudge(questionSubmitId);
         // });

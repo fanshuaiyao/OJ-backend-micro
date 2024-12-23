@@ -1,4 +1,4 @@
-package com.yupi.yuojbackendjudgeservice;
+package com.yupi.yuojbackendjudgeservice.rabbitmq;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;

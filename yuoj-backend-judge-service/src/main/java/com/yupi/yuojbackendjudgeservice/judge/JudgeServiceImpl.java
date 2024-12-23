@@ -90,6 +90,29 @@ public class JudgeServiceImpl implements JudgeService {
                 .build();
         // 5.3.2 得到沙箱的执行结果
         ExecuteCodeResponse executeCodeResponse = codeSandBox.executeCode(executeCodeRequest);
+
+        // 5.4 编译错误处理
+        // if 代码沙箱的返回状态码不是 15 说明编译正确  进行上下文传递
+        JudgeInfo judgeInfo = new JudgeInfo();
+        if (executeCodeResponse.getStatus() == 15){
+            // 5.4.1 编译错误直接修改结果返回
+            // judgeInfo.setMessage(executeCodeResponse.getMessage());
+            // judgeInfo.setTime(0L);
+            // judgeInfo.setMemory(0L);
+            // 将在运程构建好的判题信息拿到并设置到数据库
+            judgeInfo = executeCodeResponse.getJudgeInfo();
+            questionSubmitUpdate = new QuestionSubmit();
+            questionSubmitUpdate.setId(questionSubmitId);
+            questionSubmitUpdate.setStatus(QuestionSubmitStatusEnum.SUCCEED.getValue());
+            questionSubmitUpdate.setJudgeInfo(JSONUtil.toJsonStr(judgeInfo));
+            update = questionFeignClient.updateQuestionSubmitById(questionSubmitUpdate);
+            if (!update) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "题目状态更新错误！");
+            }
+            QuestionSubmit questionSubmitResult = questionFeignClient.getQuestionSubmitById(questionSubmitId);
+            return questionSubmitResult;
+        }
+
         List<String> outputList = executeCodeResponse.getOutputList();
         // 6. 设置上下文进行传递
         JudgeContext judgeContext = new JudgeContext();
@@ -101,7 +124,7 @@ public class JudgeServiceImpl implements JudgeService {
         judgeContext.setQuestionSubmit(questionSubmit);
 
         // 7. 将封装好的上下文传递给所需要的策略
-        JudgeInfo judgeInfo = judgeManager.doJudge(judgeContext);
+        judgeInfo = judgeManager.doJudge(judgeContext);
 
         // 8. 修改数据库中的判题结果  复用上述代码
         questionSubmitUpdate = new QuestionSubmit();

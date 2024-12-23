@@ -12,8 +12,9 @@ import com.yupi.yuojbackendmodel.model.entity.User;
 import com.yupi.yuojbackendmodel.model.enums.UserRoleEnum;
 import com.yupi.yuojbackendmodel.model.vo.LoginUserVO;
 import com.yupi.yuojbackendmodel.model.vo.UserVO;
-import com.yupi.yuojbackenduserservice.service.UserService;
 import com.yupi.yuojbackenduserservice.mapper.UserMapper;
+import com.yupi.yuojbackenduserservice.service.UserService;
+import com.yupi.yuojbackenduserservice.utils.JWTUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -21,11 +22,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.yupi.yuojbackendcommon.constant.UserConstant.USER_LOGIN_STATE;
+import static org.springframework.beans.BeanUtils.copyProperties;
 
 /**
  * 用户服务实现
@@ -107,6 +111,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return this.getLoginUserVO(user);
     }
 
+
+    @Override
+    public LoginUserVO getLoginUserVO(User user) {
+        if (user == null) {
+            return null;
+        }
+
+        HashMap<String, String> map = new HashMap<>();
+        map.put("userId",String.valueOf(user.getId()));
+
+        String token = null;
+        try {
+            token = JWTUtils.getToken(map);
+        } catch (UnsupportedEncodingException e) {
+            log.error(e.getMessage());
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, e.getMessage());
+        }
+        LoginUserVO loginUserVO = new LoginUserVO();
+        BeanUtils.copyProperties(user, loginUserVO);
+        loginUserVO.setToken(token);
+        log.info("token信息：" + token);
+        return loginUserVO;
+    }
+
     /**
      * 获取当前登录用户
      *
@@ -183,15 +211,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return true;
     }
 
-    @Override
-    public LoginUserVO getLoginUserVO(User user) {
-        if (user == null) {
-            return null;
-        }
-        LoginUserVO loginUserVO = new LoginUserVO();
-        BeanUtils.copyProperties(user, loginUserVO);
-        return loginUserVO;
-    }
+
 
     @Override
     public UserVO getUserVO(User user) {
@@ -199,7 +219,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return null;
         }
         UserVO userVO = new UserVO();
-        BeanUtils.copyProperties(user, userVO);
+        copyProperties(user, userVO);
         return userVO;
     }
 
