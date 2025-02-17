@@ -3,6 +3,7 @@ package com.yupi.yuojbackendmodel.model.enums;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,6 +27,21 @@ public enum UserRoleEnum {
         this.value = value;
     }
 
+    private static final HashMap<String, UserRoleEnum> TYPE_MAP = new HashMap<>();
+
+    static {
+        // 初始化类型值和枚举实例的映射关系
+        for (UserRoleEnum mapType : values()) {
+            TYPE_MAP.put(mapType.getText(), mapType);
+        }
+    }
+
+    /**
+     * 使用map
+     */
+     public static UserRoleEnum getByValue(String value) {
+        return TYPE_MAP.getOrDefault(value, null);
+    }
     /**
      * 获取值列表
      *

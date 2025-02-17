@@ -14,9 +14,13 @@ import com.yupi.yuojbackendmodel.model.entity.User;
 import com.yupi.yuojbackendmodel.model.vo.LoginUserVO;
 import com.yupi.yuojbackendmodel.model.vo.UserVO;
 import com.yupi.yuojbackenduserservice.service.UserService;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -24,9 +28,11 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
- * 用户接口
- *
- */
+ * @className: UserController
+ * @author: fanshuaiyao
+ * @date: 2025/2/17 18:13
+ * @description: TODO
+ **/
 @RestController
 @RequestMapping("/")
 @Slf4j
@@ -37,23 +43,21 @@ public class UserController {
 
 
     /**
-     * 用户注册
-     *
-     * @param userRegisterRequest
-     * @return
-     */
+     * @description: 用户注册
+     * @author: fanshuaiyao
+     * @date: 2025/2/17 17:37
+     * @param: userRegisterRequest
+     * @return: BaseResponse<Long>
+     **/
     @PostMapping("/register")
-    public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
+    @ApiOperation(value = "用户注册接口")
+    @ApiResponses({@ApiResponse(code = 200, message = "操作成功", response = BaseResponse.class)})
+    public BaseResponse<Long> userRegister(@RequestBody @Validated UserRegisterRequest userRegisterRequest) {
         if (userRegisterRequest == null) {
+            log.error("用户注册请求的请求体为空");
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        String userAccount = userRegisterRequest.getUserAccount();
-        String userPassword = userRegisterRequest.getUserPassword();
-        String checkPassword = userRegisterRequest.getCheckPassword();
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
-            return null;
-        }
-        long result = userService.userRegister(userAccount, userPassword, checkPassword);
+        long result = userService.userRegister(userRegisterRequest);
         return ResultUtils.success(result);
     }
 

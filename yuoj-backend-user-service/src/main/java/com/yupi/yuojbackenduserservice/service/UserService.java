@@ -3,6 +3,7 @@ package com.yupi.yuojbackenduserservice.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.yupi.yuojbackendmodel.model.dto.user.UserQueryRequest;
+import com.yupi.yuojbackendmodel.model.dto.user.UserRegisterRequest;
 import com.yupi.yuojbackendmodel.model.entity.User;
 import com.yupi.yuojbackendmodel.model.vo.LoginUserVO;
 import com.yupi.yuojbackendmodel.model.vo.UserVO;
@@ -17,14 +18,13 @@ import java.util.List;
 public interface UserService extends IService<User> {
 
     /**
-     * 用户注册
-     *
-     * @param userAccount   用户账户
-     * @param userPassword  用户密码
-     * @param checkPassword 校验密码
-     * @return 新用户 id
-     */
-    long userRegister(String userAccount, String userPassword, String checkPassword);
+     * @description: 注册用户
+     * @author: fanshuaiyao
+     * @date: 2025/2/17 17:33
+     * @param: userRegisterRequest
+     * @return: long
+     **/
+    long userRegister(UserRegisterRequest userRegisterRequest);
 
     /**
      * 用户登录

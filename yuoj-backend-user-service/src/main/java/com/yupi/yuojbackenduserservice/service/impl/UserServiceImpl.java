@@ -8,6 +8,7 @@ import com.yupi.yuojbackendcommon.constant.CommonConstant;
 import com.yupi.yuojbackendcommon.exception.BusinessException;
 import com.yupi.yuojbackendcommon.utils.SqlUtils;
 import com.yupi.yuojbackendmodel.model.dto.user.UserQueryRequest;
+import com.yupi.yuojbackendmodel.model.dto.user.UserRegisterRequest;
 import com.yupi.yuojbackendmodel.model.entity.User;
 import com.yupi.yuojbackendmodel.model.enums.UserRoleEnum;
 import com.yupi.yuojbackendmodel.model.vo.LoginUserVO;
@@ -17,7 +18,10 @@ import com.yupi.yuojbackenduserservice.service.UserService;
 import com.yupi.yuojbackenduserservice.utils.JWTUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.bouncycastle.asn1.x500.style.RFC4519Style;
 import org.springframework.beans.BeanUtils;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
@@ -29,6 +33,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.yupi.yuojbackendcommon.constant.UserConstant.USER_LOGIN_STATE;
+import static org.bouncycastle.asn1.x500.style.RFC4519Style.userPassword;
 import static org.springframework.beans.BeanUtils.copyProperties;
 
 /**
@@ -44,41 +49,40 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     private static final String SALT = "yupi";
 
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+
+    /**
+     * @description: 用户注册
+     * @author: fanshuaiyao
+     * @date: 2025/2/17 17:39
+     * @param: userRegisterRequest
+     * @return: long
+     **/
     @Override
-    public long userRegister(String userAccount, String userPassword, String checkPassword) {
-        // 1. 校验
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
-        }
-        if (userAccount.length() < 4) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号过短");
-        }
-        if (userPassword.length() < 8 || checkPassword.length() < 8) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码过短");
-        }
-        // 密码和校验密码相同
-        if (!userPassword.equals(checkPassword)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
-        }
-        synchronized (userAccount.intern()) {
-            // 账户不能重复
-            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("userAccount", userAccount);
-            long count = this.baseMapper.selectCount(queryWrapper);
-            if (count > 0) {
-                throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号重复");
-            }
-            // 2. 加密
-            String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
-            // 3. 插入数据
-            User user = new User();
-            user.setUserAccount(userAccount);
-            user.setUserPassword(encryptPassword);
-            boolean saveResult = this.save(user);
-            if (!saveResult) {
-                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
-            }
+    public long userRegister(UserRegisterRequest userRegisterRequest) {
+
+        // 1. 获取用户名称和密码
+        String userAccount = userRegisterRequest.getUserAccount();
+        String userPassword = userRegisterRequest.getUserPassword();
+
+        // 2. 密码加密
+        String encodePassword = passwordEncoder.encode(userPassword);
+
+        // 3. 插入数据
+        User user = new User();
+        user.setUserAccount(userAccount);
+        user.setUserPassword(encodePassword);
+        try {
+            this.save(user);
+            log.info("用户注册成功，用户名：{}", userAccount);
             return user.getId();
+        } catch (DuplicateKeyException e) {
+            log.error("用户注册失败，用户名重复，用户名：{}", userAccount, e);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户名重复，保存用户失败！");
+        } catch (Exception e) {
+            log.error("用户注册失败，未知错误，用户名：{}", userAccount, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，未知错误！");
         }
     }
 
