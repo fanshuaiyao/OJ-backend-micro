@@ -52,6 +52,12 @@
             <artifactId>java-jwt</artifactId>
             <version>4.2.1</version> <!-- 替换为最新版本 -->
         </dependency>
+        <dependency>
+            <groupId>com.yupi</groupId>
+            <artifactId>yuoj-backend-user-service</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
 
     </dependencies>
     <dependencyManagement>

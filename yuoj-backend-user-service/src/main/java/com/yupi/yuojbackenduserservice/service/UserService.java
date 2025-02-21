@@ -2,6 +2,7 @@ package com.yupi.yuojbackenduserservice.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.yupi.yuojbackendmodel.model.dto.user.UserLoginRequest;
 import com.yupi.yuojbackendmodel.model.dto.user.UserQueryRequest;
 import com.yupi.yuojbackendmodel.model.dto.user.UserRegisterRequest;
 import com.yupi.yuojbackendmodel.model.entity.User;
@@ -29,12 +30,11 @@ public interface UserService extends IService<User> {
     /**
      * 用户登录
      *
-     * @param userAccount  用户账户
-     * @param userPassword 用户密码
+     * @param userLoginRequest  用户账户
      * @param request
      * @return 脱敏后的用户信息
      */
-    LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request);
+    LoginUserVO userLogin(UserLoginRequest userLoginRequest, HttpServletRequest request);
 
     /**
      * 获取当前登录用户

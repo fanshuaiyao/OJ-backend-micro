@@ -1,11 +1,10 @@
 package com.yupi.yuojbackendcommon.utils;
-
 public class UserContext {
     private static final ThreadLocal<Long> tl = new ThreadLocal<>();
 
     /**
      * 保存当前登录用户信息到ThreadLocal
-     * @param userId 用户id
+     * @param userId 用户
      */
     public static void setUser(Long userId) {
         tl.set(userId);

@@ -7,6 +7,8 @@ import com.yupi.yuojbackendcommon.common.ErrorCode;
 import com.yupi.yuojbackendcommon.constant.CommonConstant;
 import com.yupi.yuojbackendcommon.exception.BusinessException;
 import com.yupi.yuojbackendcommon.utils.SqlUtils;
+import com.yupi.yuojbackendcommon.utils.UserContext;
+import com.yupi.yuojbackendmodel.model.dto.user.UserLoginRequest;
 import com.yupi.yuojbackendmodel.model.dto.user.UserQueryRequest;
 import com.yupi.yuojbackendmodel.model.dto.user.UserRegisterRequest;
 import com.yupi.yuojbackendmodel.model.entity.User;
@@ -86,80 +88,84 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
     }
 
+    /**
+     * @description: 用户登录
+     * @author: fanshuaiyao
+     * @date: 2025/2/18 18:04
+     * @param: userLoginRequest
+     * @param: request
+     * @return: LoginUserVO
+     **/
     @Override
-    public LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
-        // 1. 校验
-        if (StringUtils.isAnyBlank(userAccount, userPassword)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
-        }
-        if (userAccount.length() < 4) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号错误");
-        }
-        if (userPassword.length() < 8) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码错误");
-        }
-        // 2. 加密
-        String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
-        // 查询用户是否存在
+    public LoginUserVO userLogin(UserLoginRequest userLoginRequest, HttpServletRequest request) {
+
+        // 1. 获取账号密码
+        String userAccount = userLoginRequest.getUserAccount();
+        String userPassword = userLoginRequest.getUserPassword();
+
+        // 2. 查询用户是否存在
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userAccount", userAccount);
-        queryWrapper.eq("userPassword", encryptPassword);
         User user = this.baseMapper.selectOne(queryWrapper);
-        // 用户不存在
+
+        // 3. 用户不存在
         if (user == null) {
-            log.info("user login failed, userAccount cannot match userPassword");
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户不存在或密码错误");
+            log.info("user login failed, not find this account");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户不存在");
         }
-        // 3. 记录用户的登录态
+
+        // 4. 用户存在验证密码
+        boolean matches = passwordEncoder.matches(userPassword, user.getUserPassword());
+        if (!matches) {
+            log.info("user login failed, userAccount cannot match userPassword");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码错误");
+        }
+        // 5. 记录用户的登录态
         request.getSession().setAttribute(USER_LOGIN_STATE, user);
         return this.getLoginUserVO(user);
     }
 
 
+    /**
+     * @description: 得到登录用户VO
+     * @author: fanshuaiyao
+     * @date: 2025/2/18 18:05
+     * @param: user
+     * @return: LoginUserVO
+     **/
     @Override
     public LoginUserVO getLoginUserVO(User user) {
-        if (user == null) {
-            return null;
-        }
 
+        // 1. 创建token
         HashMap<String, String> map = new HashMap<>();
         map.put("userId",String.valueOf(user.getId()));
-
         String token = null;
         try {
             token = JWTUtils.getToken(map);
         } catch (UnsupportedEncodingException e) {
-            log.error(e.getMessage());
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, e.getMessage());
+            log.error("生成 Token 时出现编码错误", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败，请稍后再试");
         }
+
         LoginUserVO loginUserVO = new LoginUserVO();
         BeanUtils.copyProperties(user, loginUserVO);
         loginUserVO.setToken(token);
-        log.info("token信息：" + token);
+        log.info("token信息：{}", token);
         return loginUserVO;
     }
 
+
     /**
-     * 获取当前登录用户
-     *
-     * @param request
-     * @return
-     */
+     * @description: 从ThreadLocal中获取当前登录用户
+     * @author: fanshuaiyao
+     * @date: 2025/2/18 18:27
+     * @param: request
+     * @return: User
+     **/
     @Override
     public User getLoginUser(HttpServletRequest request) {
-        // 先判断是否已登录
-        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
-        User currentUser = (User) userObj;
-        if (currentUser == null || currentUser.getId() == null) {
-            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
-        }
-        // 从数据库查询（追求性能的话可以注释，直接走缓存）
-        long userId = currentUser.getId();
-        currentUser = this.getById(userId);
-        if (currentUser == null) {
-            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
-        }
-        return currentUser;
+        Long userId = UserContext.getUser();
+        return this.getById(userId);
     }
 
     /**

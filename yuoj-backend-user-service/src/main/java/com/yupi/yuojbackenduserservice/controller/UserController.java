@@ -31,7 +31,7 @@ import java.util.List;
  * @className: UserController
  * @author: fanshuaiyao
  * @date: 2025/2/17 18:13
- * @description: TODO
+ * @description: 用户相关接口
  **/
 @RestController
 @RequestMapping("/")
@@ -62,27 +62,37 @@ public class UserController {
     }
 
     /**
-     * 用户登录
-     *
-     * @param userLoginRequest
-     * @param request
-     * @return
-     */
+     * @description: 用户登录接口
+     * @author: fanshuaiyao
+     * @date: 2025/2/18 14:56
+     * @param: userLoginRequest
+     * @param: request
+     * @return: BaseResponse<LoginUserVO>
+     **/
     @PostMapping("/login")
-    public BaseResponse<LoginUserVO> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
+    @ApiOperation(value = "用户登录接口")
+    @ApiResponses({@ApiResponse(code = 200, message = "操作成功", response = BaseResponse.class)})
+    public BaseResponse<LoginUserVO> userLogin(@RequestBody @Validated UserLoginRequest userLoginRequest, HttpServletRequest request) {
         if (userLoginRequest == null) {
+            log.error("用户登录请求的请求为空！");
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        String userAccount = userLoginRequest.getUserAccount();
-        String userPassword = userLoginRequest.getUserPassword();
-        if (StringUtils.isAnyBlank(userAccount, userPassword)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        LoginUserVO loginUserVO = userService.userLogin(userAccount, userPassword, request);
+        LoginUserVO loginUserVO = userService.userLogin(userLoginRequest,request);
         return ResultUtils.success(loginUserVO);
     }
 
 
+    /**
+     * 获取当前登录用户
+     *
+     * @param request
+     * @return
+     */
+    @GetMapping("/get/login")
+    public BaseResponse<LoginUserVO> getLoginUser(HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        return ResultUtils.success(userService.getLoginUserVO(user));
+    }
 
     /**
      * 用户注销
@@ -99,17 +109,7 @@ public class UserController {
         return ResultUtils.success(result);
     }
 
-    /**
-     * 获取当前登录用户
-     *
-     * @param request
-     * @return
-     */
-    @GetMapping("/get/login")
-    public BaseResponse<LoginUserVO> getLoginUser(HttpServletRequest request) {
-        User user = userService.getLoginUser(request);
-        return ResultUtils.success(userService.getLoginUserVO(user));
-    }
+
 
     // endregion
 
@@ -248,7 +248,6 @@ public class UserController {
         return ResultUtils.success(userVOPage);
     }
 
-    // endregion
 
     /**
      * 更新个人信息

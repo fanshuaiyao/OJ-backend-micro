@@ -4,6 +4,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yupi.yuojbackendgatetway.utils.JWTUtils;
+import com.yupi.yuojbackenduserservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -19,6 +20,7 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import javax.annotation.Resource;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -32,9 +34,8 @@ public class GlobalAuthFilter implements GlobalFilter, Ordered {
 
     private final AntPathMatcher antPathMatcher = new AntPathMatcher();
 
-    // private final AuthProperties authProperties;
-
-    // private final JwtTool jwtTool;
+    @Resource
+    private UserService userService;
 
 
     @Override
@@ -81,8 +82,9 @@ public class GlobalAuthFilter implements GlobalFilter, Ordered {
             ObjectMapper objectMapper = new ObjectMapper();
             Map<String, Object> payloadMap = objectMapper.readValue(decodedString, Map.class);
             userId= payloadMap.get("userId");
-            // Long uId = Long.parseLong(String.valueOf(userId));
-            // log.info("userId = {}", uId);
+        //     todo 将用户设置到ThreadLocal
+
+
 
         } catch (UnsupportedEncodingException e) {
             ServerHttpResponse response = exchange.getResponse();
