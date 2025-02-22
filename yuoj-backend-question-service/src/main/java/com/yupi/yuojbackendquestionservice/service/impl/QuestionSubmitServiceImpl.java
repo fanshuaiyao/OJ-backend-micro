@@ -55,13 +55,17 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
 
     @Resource
     private MyMessageProducer myMessageProducer;
+    public static final String DEFAULT_JUDGE_INFO = "{}";
+
+
     /**
-     * 提交题目
-     *
-     * @param questionSubmitAddRequest
-     * @param loginUser
-     * @return
-     */
+     * @description: 题目提交业务层
+     * @author: fanshuaiyao
+     * @date: 2025/2/22 14:26
+     * @param: questionSubmitAddRequest
+     * @param: loginUser
+     * @return: long
+     **/
     @Override
     public long doQuestionSubmit(QuestionSubmitAddRequest questionSubmitAddRequest, User loginUser) {
         Long user = UserContext.getUser();
@@ -77,12 +81,12 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "编程语言错误！");
         }
 
-        // 判断实体是否存在，根据类别获取实体
+        // 3. 判断实体是否存在，根据类别获取实体
         Question question = questionService.getById(questionId);
         if (question == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
-        // 是否已提交题目
+        // 4.是否已提交题目
         long userId = loginUser.getId();
 
         QuestionSubmit questionSubmit = new QuestionSubmit();
@@ -92,7 +96,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         questionSubmit.setLanguage(language);
         // setStatus 默认值使用枚举来设置
         questionSubmit.setStatus(QuestionSubmitStatusEnum.WAITING.getValue());
-        questionSubmit.setJudgeInfo("{}");
+        questionSubmit.setJudgeInfo(DEFAULT_JUDGE_INFO);
         boolean save = this.save(questionSubmit);
         if (!save) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "数据插入失败！");

@@ -10,6 +10,7 @@ import com.yupi.yuojbackendcommon.common.ResultUtils;
 import com.yupi.yuojbackendcommon.constant.UserConstant;
 import com.yupi.yuojbackendcommon.exception.BusinessException;
 import com.yupi.yuojbackendcommon.exception.ThrowUtils;
+import com.yupi.yuojbackendcommon.utils.UserContext;
 import com.yupi.yuojbackendmodel.model.dto.question.*;
 import com.yupi.yuojbackendmodel.model.dto.questionsubmit.QuestionSubmitAddRequest;
 import com.yupi.yuojbackendmodel.model.dto.questionsubmit.QuestionSubmitQueryRequest;
@@ -21,8 +22,13 @@ import com.yupi.yuojbackendmodel.model.vo.QuestionVO;
 import com.yupi.yuojbackendquestionservice.service.QuestionService;
 import com.yupi.yuojbackendquestionservice.service.QuestionSubmitService;
 import com.yupi.yuojbackendserviceclient.service.UserFeignClient;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -61,10 +67,14 @@ public class QuestionController {
      * @return
      */
     @PostMapping("/add")
-    public BaseResponse<Long> addQuestion(@RequestBody QuestionAddRequest questionAddRequest, HttpServletRequest request) {
+    @ApiOperation(value = "创建题目")
+    @ApiResponses({@ApiResponse(code = 200, message = "操作成功")})
+    public BaseResponse<Long> addQuestion(@RequestBody @Validated QuestionAddRequest questionAddRequest, HttpServletRequest request) {
         if (questionAddRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+
+
         Question question = new Question();
         BeanUtils.copyProperties(questionAddRequest, question);
         List<String> tags = questionAddRequest.getTags();
@@ -293,19 +303,18 @@ public class QuestionController {
 
     /**
      * 提交题目
-     * @param QuestionSubmitAddRequest
+     * @param questionSubmitAddRequest
      * @param request
      * @return 提交记录的id
      */
     @PostMapping("/question_submit/do")
-    public BaseResponse<Long> doQuestionSubmit(@RequestBody QuestionSubmitAddRequest QuestionSubmitAddRequest,
-                                               HttpServletRequest request) {
-        if (QuestionSubmitAddRequest == null || QuestionSubmitAddRequest.getQuestionId() <= 0) {
+    public BaseResponse<Long> doQuestionSubmit(@RequestBody @Validated QuestionSubmitAddRequest questionSubmitAddRequest, HttpServletRequest request) {
+        if (questionSubmitAddRequest == null || questionSubmitAddRequest.getQuestionId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         // 登录才能提交题目
         final User loginUser = userFeignClient.getLoginUser(request);
-        long questionSubmitId = questionSubmitService.doQuestionSubmit(QuestionSubmitAddRequest, loginUser);
+        long questionSubmitId = questionSubmitService.doQuestionSubmit(questionSubmitAddRequest, loginUser);
         return ResultUtils.success(questionSubmitId);
     }
 
